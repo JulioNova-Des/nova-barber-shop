@@ -1,0 +1,18 @@
+# render.yaml — Blueprint de Render para NOVA Barber Shop backend
+# Uso: conectá tu repo en render.com y este archivo auto-configura todo.
+
+services:
+  - type: web
+    name: nova-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free         # cambiar a "starter" ($7/mes) cuando necesites uptime 24/7
+    envVars:
+      - key: DATABASE_URL
+        sync: false    # lo configurás manualmente con el string de Neon
+      - key: NOVA_SECRET_KEY
+        generateValue: true   # Render genera un secret random
+      - key: PYTHON_VERSION
+        value: "3.12.0"
