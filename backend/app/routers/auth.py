@@ -1,15 +1,13 @@
 """
 Auth — NOVA BARBER SHOP
 ================================
-- POST /auth/register: alta pública de CLIENTE registrado (guarda
-  historial y barbero/sucursal habitual). Barberos y admins NO se
-  autorregistran: los crea el admin directamente en la tabla `users`
-  (fuera del alcance de esta API pública, vía panel interno/seed).
-- POST /auth/login: login unificado por email o teléfono — sirve para
-  los tres roles, ya que todos son un `User` con `role` distinto.
+- POST /auth/register: alta pública de CLIENTE registrado.
+- POST /auth/login: login JSON (usado por la app frontend).
+- POST /auth/token: login OAuth2 form (usado por Swagger Authorize).
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
 from app.core.database import get_session
@@ -18,6 +16,24 @@ from app.models.models import User, UserRole
 from app.schemas.auth import ClientRegister, LoginRequest, TokenResponse, UserPublic
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _do_login(identifier: str, password: str, session: Session) -> dict:
+    user = session.exec(
+        select(User).where(
+            (User.email == identifier) | (User.phone == identifier)
+        )
+    ).first()
+
+    if not user or not user.hashed_password or not verify_password(
+        password, user.hashed_password
+    ):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Credenciales inválidas.")
+    if not user.is_active:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Cuenta inactiva.")
+
+    token = create_access_token(user.id)
+    return TokenResponse(access_token=token, user=UserPublic.model_validate(user))
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -48,21 +64,22 @@ def register_client(payload: ClientRegister, session: Session = Depends(get_sess
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, session: Session = Depends(get_session)):
-    user = session.exec(
-        select(User).where(
-            (User.email == payload.identifier) | (User.phone == payload.identifier)
-        )
-    ).first()
+    """Login con JSON body — usado por la app frontend."""
+    return _do_login(payload.identifier, payload.password, session)
 
-    if not user or not user.hashed_password or not verify_password(
-        payload.password, user.hashed_password
-    ):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Credenciales inválidas.")
-    if not user.is_active:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Cuenta inactiva.")
 
-    token = create_access_token(user.id)
-    return TokenResponse(access_token=token, user=UserPublic.model_validate(user))
+@router.post("/token")
+def login_swagger(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    """
+    Login con OAuth2 form data — usado por el botón Authorize de Swagger.
+    En username poné tu email o teléfono.
+    """
+    result = _do_login(form_data.username, form_data.password, session)
+    # OAuth2 espera "access_token" en la respuesta (ya lo tiene TokenResponse)
+    return result
 
 
 @router.get("/me", response_model=UserPublic)

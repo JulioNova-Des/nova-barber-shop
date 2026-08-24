@@ -28,7 +28,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # auto_error=False -> no lanza 401 automáticamente si falta el token;
 # así el mismo endpoint sirve a invitados y a clientes logueados.
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token", auto_error=False)
 
 
 def hash_password(password: str) -> str:
