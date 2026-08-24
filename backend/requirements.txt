@@ -2,6 +2,7 @@ fastapi>=0.110
 uvicorn[standard]>=0.29
 sqlmodel>=0.0.16
 psycopg[binary]>=3.1
+psycopg2-binary>=2.9
 python-jose[cryptography]>=3.3
 passlib>=1.7
 bcrypt==4.0.1
