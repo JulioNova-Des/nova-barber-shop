@@ -7,16 +7,20 @@ DATABASE_URL = os.getenv(
     "postgresql+psycopg://nova:nova@localhost:5432/nova_barber",
 )
 
-# Neon da URLs tipo "postgresql://..." pero nuestro driver es psycopg (v3).
-# SQLAlchemy necesita "postgresql+psycopg://..." para usar el driver correcto.
-if DATABASE_URL.startswith("postgresql://"):
+# Neon/Render pueden dar URLs con distintos prefijos:
+#   postgres://...       → viejo, SQLAlchemy busca psycopg2 (no instalado)
+#   postgresql://...     → igual, busca psycopg2
+# Nuestro driver es psycopg v3, necesita:
+#   postgresql+psycopg://...
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
 engine = create_engine(DATABASE_URL, echo=False)
 
 
 def init_db() -> None:
-    """Crea las tablas si no existen. En producción usar Alembic."""
     SQLModel.metadata.create_all(engine)
 
 
