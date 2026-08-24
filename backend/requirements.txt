@@ -3,10 +3,7 @@ uvicorn[standard]>=0.29
 sqlmodel>=0.0.16
 psycopg[binary]>=3.1
 python-jose[cryptography]>=3.3
-passlib[bcrypt]>=1.7
-# passlib 1.7.4's bcrypt backend detection breaks on bcrypt>=4.1 (they
-# dropped the __about__.__version__ attribute passlib probes for) —
-# pinned until passlib ships a fix.
-bcrypt<4.1
+passlib>=1.7
+bcrypt==4.0.1
 python-multipart>=0.0.9
 email-validator>=2.1

@@ -32,6 +32,9 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     init_db()
+    # Configuración automática de NOVA — idempotente, no duplica datos
+    from app.setup_nova import setup
+    setup()
 
 
 app.include_router(auth.router)
