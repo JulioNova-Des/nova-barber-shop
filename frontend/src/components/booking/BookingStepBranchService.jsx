@@ -21,8 +21,14 @@ export default function BookingStepBranchService({
   services = [],
   onContinue,
 }) {
+  // Si hay una sola sucursal, pre-seleccionarla automáticamente
   const [branchId, setBranchId] = useState(null);
   const [serviceId, setServiceId] = useState(null);
+
+  // Auto-select cuando branches carguen y solo hay una
+  if (branches.length === 1 && branchId === null) {
+    setBranchId(branches[0].id);
+  }
 
   const canContinue = branchId && serviceId;
 

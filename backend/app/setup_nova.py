@@ -168,7 +168,6 @@ def setup():
             {"name": "Corte",         "price": 17000, "duration_minutes": 30},
             {"name": "Corte + Barba", "price": 19000, "duration_minutes": 30},
             {"name": "Barba",         "price": 6000,  "duration_minutes": 30},
-            {"name": "Corte niño",    "price": 15000, "duration_minutes": 30},
         ]
         for sv in servicios:
             existing = s.exec(select(Service).where(Service.name == sv["name"])).first()
@@ -179,8 +178,13 @@ def setup():
                 s.add(existing)
             else:
                 s.add(Service(**sv))
+        # Desactivar Corte niño si existe
+        corte_nino = s.exec(select(Service).where(Service.name == "Corte niño")).first()
+        if corte_nino:
+            corte_nino.is_active = False
+            s.add(corte_nino)
         s.commit()
-        print(f"\n[servicios] 4 servicios configurados")
+        print(f"\n[servicios] 3 servicios configurados")
 
         # ============================================================
         # 7. COMISIÓN BASE 60/40

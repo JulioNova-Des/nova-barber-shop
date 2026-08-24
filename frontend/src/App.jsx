@@ -31,6 +31,7 @@ function HomePage() {
 }
 
 function BookingPage() {
+  const nav = useNavigate();
   const [step, setStep] = useState(1);
   const [branches, setBranches] = useState([]);
   const [services, setServices] = useState([]);
@@ -47,31 +48,47 @@ function BookingPage() {
     }
   }, []);
 
+  const resetBooking = () => {
+    setBooking({});
+    setStep(1);
+  };
+
   if (step === 1) return (
     <BookingStepBranchService branches={branches} services={services}
       onContinue={({ branchId, serviceId }) => {
         const branch = branches.find(b => b.id === branchId);
         const service = services.find(s => s.id === serviceId);
-        setBooking(prev => ({ ...prev, branchId, serviceId, branchName: branch?.name, serviceName: service?.name, price: service?.price, durationMinutes: service?.duration_minutes }));
+        setBooking({ branchId, serviceId, branchName: branch?.name, serviceName: service?.name, price: service?.price, durationMinutes: service?.duration_minutes });
         setStep(2);
       }}
     />
   );
+
   if (step === 2) return (
     <BookingStepDateTime branchId={booking.branchId} serviceId={booking.serviceId}
       onBack={() => setStep(1)}
       onContinue={({ date, startTime, endTime, barberId, chairId }) => {
+        // Find barber name from availability data
         setBooking(prev => ({ ...prev, date, startTime, endTime, barberId, chairId }));
         setStep(3);
       }}
     />
   );
+
   return (
-    <BookingStepConfirm currentUser={user} branchId={booking.branchId} branchName={booking.branchName}
-      serviceId={booking.serviceId} serviceName={booking.serviceName} price={booking.price} durationMinutes={booking.durationMinutes}
-      chairId={booking.chairId} chairLabel={`Silla ${booking.chairId}`} barberId={booking.barberId} barberName="Barbero asignado"
+    <BookingStepConfirm
+      currentUser={user}
+      branchId={booking.branchId} branchName={booking.branchName}
+      serviceId={booking.serviceId} serviceName={booking.serviceName}
+      price={booking.price} durationMinutes={booking.durationMinutes}
+      chairId={booking.chairId} chairLabel={`Silla ${booking.chairId}`}
+      barberId={booking.barberId} barberName="Barbero asignado"
       date={booking.date} startTime={booking.startTime} endTime={booking.endTime}
-      onBack={() => setStep(2)} onGoToAvailability={() => setStep(2)} />
+      onBack={() => setStep(2)}
+      onGoToAvailability={() => setStep(2)}
+      onNewBooking={resetBooking}
+      onGoHome={() => nav("/")}
+    />
   );
 }
 
