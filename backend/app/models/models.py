@@ -263,3 +263,21 @@ class Appointment(SQLModel, table=True):
         back_populates="appointments",
         sa_relationship_kwargs={"foreign_keys": "Appointment.client_id"},
     )
+
+
+# ---------------------------------------------------------------------------
+# PageVisit — contador de visitas a la página (mensual)
+# ---------------------------------------------------------------------------
+
+class PageVisit(SQLModel, table=True):
+    __tablename__ = "page_visits"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    year: int = Field(index=True)
+    month: int = Field(index=True)
+    day: int
+    count: int = Field(default=0)
+    # Unique constraint: una fila por día
+    __table_args__ = (
+        UniqueConstraint("year", "month", "day", name="uq_visit_day"),
+    )

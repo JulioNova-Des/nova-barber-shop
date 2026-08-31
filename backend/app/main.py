@@ -5,6 +5,7 @@ from app.core.database import init_db
 from app.routers import (
     admin_dashboard,
     admin_staff,
+    analytics,
     appointments,
     auth,
     availability,
@@ -51,6 +52,7 @@ app.include_router(commissions.router)
 app.include_router(admin_dashboard.router)
 app.include_router(branch_calendar.router)
 app.include_router(gallery.router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")

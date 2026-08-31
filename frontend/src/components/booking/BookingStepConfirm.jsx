@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   CalendarCheck, User2, Phone, Scissors, MapPin, Clock,
-  CheckCircle2, AlertTriangle, MessageCircle,
+  CheckCircle2, AlertTriangle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,28 +15,6 @@ const formatCOP = (value) =>
 
 const formatLongDate = (iso) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
-
-// Número de WhatsApp de NOVA para enviar confirmaciones
-const NOVA_PHONE = "573207970201";
-
-function buildWhatsAppToClient(clientPhone, data) {
-  // Limpiar el número del cliente
-  const clean = clientPhone.replace(/\D/g, "");
-  const num = clean.startsWith("57") ? clean : `57${clean}`;
-  const msg = encodeURIComponent(
-    `✂ *NOVA BARBER SHOP*\n\n` +
-    `¡Hola ${data.name}! Tu cita está confirmada:\n\n` +
-    `📅 ${data.date}\n` +
-    `🕐 ${data.time}\n` +
-    `✂ ${data.service}\n` +
-    `💰 ${data.price}\n` +
-    `📍 Nova Barber Shop, Calle 9 #4-63, Candelaria\n\n` +
-    `Reserva #${data.id}\n` +
-    `¡Te esperamos! 💈`
-  );
-  // Abre WhatsApp HACIA el cliente (Nova envía el mensaje)
-  return `https://wa.me/${num}?text=${msg}`;
-}
 
 export default function BookingStepConfirm({
   currentUser = null,
@@ -79,17 +57,6 @@ export default function BookingStepConfirm({
 
   // ---------- VISTA DE ÉXITO ----------
   if (confirmed) {
-    const clientPhone = confirmed.client_phone || guestPhone;
-    const clientName = confirmed.client_name || guestName;
-    const waUrl = buildWhatsAppToClient(clientPhone, {
-      name: clientName,
-      date: formatLongDate(date),
-      time: `${confirmed.start_time?.slice(11, 16) || startTime} – ${confirmed.end_time?.slice(11, 16) || endTime}`,
-      service: confirmed.service_name || serviceName,
-      price: formatCOP(confirmed.price || price),
-      id: confirmed.id,
-    });
-
     return (
       <div className="min-h-screen bg-nova-bg-main text-nova-offwhite">
         <div className="mx-auto flex w-full max-w-lg flex-col items-center px-6 py-16 text-center">
@@ -116,19 +83,10 @@ export default function BookingStepConfirm({
             </div>
           </Card>
 
-          {/* WhatsApp buttons */}
-          <div className="mt-6 flex w-full flex-col gap-3">
-            <a href={waUrl} target="_blank" rel="noopener noreferrer"
-              className={cn(
-                "flex h-12 items-center justify-center gap-2 rounded-nova font-display text-sm font-semibold uppercase tracking-wide",
-                "bg-[#25D366] text-white hover:brightness-110"
-              )}>
-              <MessageCircle className="h-5 w-5" />
-              Enviar confirmación al cliente por WhatsApp
-            </a>
-          </div>
+          <p className="mt-4 font-sans text-sm text-nova-offwhite/50">
+            Recibirás una confirmación por parte de NOVA Barber Shop.
+          </p>
 
-          {/* Navigation */}
           <div className="mt-6 flex w-full gap-3">
             <Button
               onClick={onNewBooking}
@@ -158,7 +116,7 @@ export default function BookingStepConfirm({
     <div className="min-h-screen bg-nova-bg-main text-nova-offwhite">
       <div className="mx-auto w-full max-w-2xl px-6 py-14">
         <div className="mb-8 space-y-2">
-          <span className="font-sans text-xs uppercase tracking-[0.25em] text-nova-gold-light">Paso {isGuest ? "2" : "2"} de {isGuest ? "2" : "2"}</span>
+          <span className="font-sans text-xs uppercase tracking-[0.25em] text-nova-gold-light">Confirmación</span>
           <h1 className="font-display text-3xl font-bold sm:text-4xl">Confirma tu cita</h1>
           <p className="font-sans text-sm text-nova-offwhite/60">Revisa los detalles y completa tus datos.</p>
         </div>
@@ -188,16 +146,13 @@ export default function BookingStepConfirm({
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="guest-phone" className="font-sans text-xs text-nova-offwhite/60">WhatsApp</Label>
+                <Label htmlFor="guest-phone" className="font-sans text-xs text-nova-offwhite/60">Teléfono</Label>
                 <div className="relative">
                   <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-nova-offwhite/40" />
                   <Input id="guest-phone" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} placeholder="Ej: 300 123 4567" inputMode="tel"
                     className="h-11 rounded-nova border-white/15 bg-nova-bg-main pl-9 font-sans text-nova-offwhite placeholder:text-nova-offwhite/30 focus-visible:ring-nova-gold-light" />
                 </div>
               </div>
-              <p className="font-sans text-xs text-nova-offwhite/40">
-                Te enviaremos la confirmación por WhatsApp al completar la reserva.
-              </p>
             </div>
           </section>
         ) : (
