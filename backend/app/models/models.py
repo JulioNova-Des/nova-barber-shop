@@ -248,6 +248,7 @@ class Appointment(SQLModel, table=True):
     # Paso 2: admin/cajero confirma pago (ATTENDED → COMPLETED)
     payment_confirmed_at: Optional[datetime] = Field(default=None)
     payment_confirmed_by: Optional[int] = Field(default=None, foreign_key="users.id")
+    payment_method: Optional[str] = Field(default=None)  # "efectivo" | "transferencia"
 
     # --- Comisión (se calcula SOLO al confirmar pago, paso 2) ---
     barber_pct_snapshot: Optional[int] = Field(default=None)
@@ -281,3 +282,19 @@ class PageVisit(SQLModel, table=True):
     __table_args__ = (
         UniqueConstraint("year", "month", "day", name="uq_visit_day"),
     )
+
+
+# ---------------------------------------------------------------------------
+# PettyCash — gastos de caja menor
+# ---------------------------------------------------------------------------
+
+class PettyCash(SQLModel, table=True):
+    __tablename__ = "petty_cash"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    date: date = Field(index=True)
+    description: str
+    amount: int  # en COP
+    created_by: int = Field(foreign_key="users.id")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

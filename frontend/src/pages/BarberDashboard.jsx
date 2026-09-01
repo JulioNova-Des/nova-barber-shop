@@ -79,6 +79,16 @@ export default function BarberDashboard({ user, token, onLogout }) {
         {tab === "agenda" && (
           <>
             {/* Date nav */}
+            <div className="mb-2 flex gap-2">
+              {(() => {
+                const today = new Date().toISOString().slice(0, 10);
+                const tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
+                const tomorrowStr = tmr.toISOString().slice(0, 10);
+                return [["Hoy", today], ["Mañana", tomorrowStr]].map(([l, d]) => (
+                  <button key={l} onClick={() => setDate(d)} className={cn("rounded-full px-3 py-1 text-xs font-medium", date === d ? "border border-nova-gold bg-nova-gold/10 text-nova-gold-light" : "border border-white/10 text-nova-offwhite/50")}>{l}</button>
+                ));
+              })()}
+            </div>
             <div className="mb-4 flex items-center gap-3">
               <button onClick={() => { const d = new Date(date); d.setDate(d.getDate() - 1); setDate(d.toISOString().slice(0, 10)); }}
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-nova-offwhite/60 hover:border-nova-gold/50">←</button>

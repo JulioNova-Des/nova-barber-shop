@@ -136,9 +136,14 @@ def list_pending_payments(
     return [_to_pending(a, session) for a in session.exec(stmt).all()]
 
 
+class ConfirmPaymentRequest(BaseModel):
+    payment_method: str = "efectivo"  # "efectivo" | "transferencia"
+
+
 @router.post("/{appointment_id}/confirm", response_model=PaymentConfirmResponse)
 def confirm_payment(
     appointment_id: int,
+    payload: ConfirmPaymentRequest = None,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -176,6 +181,7 @@ def confirm_payment(
     appt.status = AppointmentStatus.COMPLETED
     appt.payment_confirmed_at = datetime.utcnow()
     appt.payment_confirmed_by = current_user.id
+    appt.payment_method = payload.payment_method if payload else "efectivo"
     appt.barber_pct_snapshot = barber_pct
     appt.shop_pct_snapshot = shop_pct
     appt.barber_amount = barber_amount

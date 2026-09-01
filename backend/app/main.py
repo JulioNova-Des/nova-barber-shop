@@ -17,6 +17,7 @@ from app.routers import (
     chairs,
     commissions,
     gallery,
+    petty_cash,
     services,
 )
 
@@ -52,6 +53,7 @@ app.include_router(commissions.router)
 app.include_router(admin_dashboard.router)
 app.include_router(branch_calendar.router)
 app.include_router(gallery.router)
+app.include_router(petty_cash.router)
 app.include_router(analytics.router)
 
 
