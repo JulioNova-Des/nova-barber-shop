@@ -49,7 +49,10 @@ export default function ClientProfilePage({ user, token, onLogout, onNewBooking 
             <img src="/logo-nova.jpg" alt="NOVA" className="h-8 w-8 rounded-full border border-nova-gold/30 object-cover" />
             <div><div className="font-display text-sm font-bold">NOVA <span className="text-nova-gold-light">BARBER</span></div></div>
           </div>
-          <button onClick={onLogout} className="rounded-nova border border-white/15 px-3 py-1.5 font-sans text-xs text-nova-offwhite/60">Cerrar sesión</button>
+          <div className="flex gap-2">
+            <button onClick={onNewBooking} className="rounded-nova border border-nova-gold/30 bg-nova-gold/5 px-3 py-1.5 font-sans text-xs text-nova-gold-light">Reservar</button>
+            <button onClick={onLogout} className="rounded-nova border border-white/15 px-3 py-1.5 font-sans text-xs text-nova-offwhite/60">Salir</button>
+          </div>
         </div>
       </div>
 

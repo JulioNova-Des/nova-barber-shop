@@ -4,7 +4,7 @@ import { COP, Inp, FormWrap, ItemCard, Btn, CalendarGrid, SlotDetailModal } from
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-export default function CashierDashboard({ user, token, onLogout }) {
+export default function CashierDashboard({ user, token, onLogout, onHome }) {
   const [tab, setTab] = useState("pending");
   const H = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   const [pending, setPending] = useState([]);
@@ -52,7 +52,7 @@ export default function CashierDashboard({ user, token, onLogout }) {
       <div className="sticky top-0 z-10 border-b border-white/10 bg-nova-bg-main/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-3">
           <div><div className="font-display text-sm font-bold">NOVA <span className="text-nova-gold-light">CAJA</span></div><div className="text-[11px] text-nova-offwhite/50">{user.full_name}</div></div>
-          <div className="flex gap-2"><button onClick={load} className="rounded-nova border border-white/15 px-3 py-1.5 text-xs text-nova-offwhite/60">↻</button><button onClick={onLogout} className="rounded-nova border border-white/15 px-3 py-1.5 text-xs text-nova-offwhite/60">Salir</button></div>
+          <div className="flex gap-2">{onHome && <button onClick={onHome} className="rounded-nova border border-white/15 px-3 py-1.5 text-xs text-nova-offwhite/60">🏠</button>}<button onClick={load} className="rounded-nova border border-white/15 px-3 py-1.5 text-xs text-nova-offwhite/60">↻</button><button onClick={onLogout} className="rounded-nova border border-white/15 px-3 py-1.5 text-xs text-nova-offwhite/60">Salir</button></div>
         </div>
         <div className="mx-auto flex max-w-2xl gap-1 px-5 pb-2">
           {[["pending",`💰 Cobros (${pending.length})`],["calendar","📅 Calendario"],["petty","🧾 Caja menor"]].map(([k,l])=>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const COP = (v) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
 
-export default function BarberDashboard({ user, token, onLogout }) {
+export default function BarberDashboard({ user, token, onLogout, onHome }) {
   const [tab, setTab] = useState("agenda");
   const [agenda, setAgenda] = useState([]);
   const [balance, setBalance] = useState(null);
@@ -64,6 +64,7 @@ export default function BarberDashboard({ user, token, onLogout }) {
             <div className="font-sans text-[11px] text-nova-offwhite/50">{user.full_name} · Barbero</div>
           </div>
           <button onClick={onLogout} className="rounded-nova border border-white/15 px-3 py-1.5 font-sans text-xs text-nova-offwhite/60 hover:border-white/30">Salir</button>
+          {onHome && <button onClick={onHome} className="rounded-nova border border-white/15 px-3 py-1.5 font-sans text-xs text-nova-offwhite/60">🏠</button>}
         </div>
         <div className="mx-auto flex max-w-2xl gap-1 px-5 pb-2">
           {[["agenda", "Mi Agenda"], ["balance", "Mi Balance"]].map(([k, l]) => (
