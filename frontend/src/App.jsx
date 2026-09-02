@@ -68,18 +68,17 @@ function HomePage() {
 
 function BookingPage() {
   const nav = useNavigate();
-  const [step, setStep] = useState("auth");
+  const initialUser = getClientUser();
+  const [step, setStep] = useState(initialUser ? "1" : "auth");
   const [branches, setBranches] = useState([]);
   const [services, setServices] = useState([]);
   const [booking, setBooking] = useState({});
-  const [clientUser, setClientUser] = useState(null);
+  const [clientUser, setClientUser] = useState(initialUser);
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     fetch(`${API}/branches`).then(r => r.json()).then(setBranches).catch(() => {});
     fetch(`${API}/services`).then(r => r.json()).then(setServices).catch(() => {});
-    const cu = getClientUser();
-    if (cu) { setClientUser(cu); setStep("1"); }
   }, []);
 
   const handleLogin = (user) => { setClientUser(user); setIsGuest(false); setStep("1"); };
