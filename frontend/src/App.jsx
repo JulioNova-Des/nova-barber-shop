@@ -32,18 +32,36 @@ function HomePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-nova-bg-deep px-6 text-center">
       <img src="/logo-nova.jpg" alt="NOVA" className="mb-6 h-40 w-40 rounded-full border-2 border-nova-gold/30 object-cover shadow-nova-gold" />
-      <h1 className="font-display text-sm uppercase tracking-[0.25em] text-nova-champagne">Sistema de Reservas</h1>
-      <p className="mt-2 max-w-sm font-sans text-sm text-nova-offwhite/50">Agenda tu cita en línea. Elige servicio, fecha y hora — sin esperas.</p>
-      <button onClick={() => nav("/reservar")} className="mt-8 rounded-nova bg-nova-gold-gradient px-8 py-4 font-display text-sm font-semibold uppercase tracking-wide text-nova-bg-deep hover:brightness-110">Reservar ahora</button>
-      <div className="mt-6 flex flex-wrap justify-center gap-3">
-        {cu ? (<>
-          <button onClick={() => nav("/perfil")} className="rounded-nova border border-nova-gold/30 bg-nova-gold/5 px-5 py-2.5 font-sans text-xs text-nova-gold-light">👤 {cu.full_name}</button>
-          <button onClick={logout} className="rounded-nova border border-white/10 px-4 py-2.5 font-sans text-xs text-nova-offwhite/40">Cerrar sesión</button>
-        </>) : (
+      <h1 className="font-display text-sm uppercase tracking-[0.25em] text-nova-champagne">Nova Barber Shop</h1>
+
+      {cu ? (<>
+        <p className="mt-2 font-sans text-sm text-nova-offwhite/60">Hola, <span className="text-nova-offwhite">{cu.full_name}</span></p>
+
+        <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
+          <button onClick={() => nav("/reservar")}
+            className="h-14 w-full rounded-nova bg-nova-gold-gradient font-display text-sm font-semibold uppercase tracking-wide text-nova-bg-deep hover:brightness-110">
+            ✂ Nueva reserva
+          </button>
+          <button onClick={() => nav("/perfil")}
+            className="h-14 w-full rounded-nova border border-white/15 bg-nova-bg-matte font-display text-sm font-semibold uppercase tracking-wide text-nova-offwhite hover:border-nova-gold/30">
+            📋 Ver mis reservas
+          </button>
+          <button onClick={logout}
+            className="mt-2 font-sans text-xs text-nova-offwhite/40 hover:text-nova-offwhite/60">
+            Cerrar sesión
+          </button>
+        </div>
+      </>) : (<>
+        <p className="mt-2 max-w-sm font-sans text-sm text-nova-offwhite/50">Agenda tu cita en línea. Elige servicio, fecha y hora — sin esperas.</p>
+        <button onClick={() => nav("/reservar")}
+          className="mt-8 rounded-nova bg-nova-gold-gradient px-8 py-4 font-display text-sm font-semibold uppercase tracking-wide text-nova-bg-deep hover:brightness-110">
+          Reservar ahora
+        </button>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button onClick={() => nav("/cuenta")} className="rounded-nova border border-white/15 px-5 py-2.5 font-sans text-xs text-nova-offwhite/50">👤 Iniciar sesión</button>
-        )}
-        <button onClick={() => nav("/staff")} className="rounded-nova border border-white/10 px-4 py-2.5 font-sans text-xs text-nova-offwhite/30">Staff</button>
-      </div>
+          <button onClick={() => nav("/staff")} className="rounded-nova border border-white/10 px-4 py-2.5 font-sans text-xs text-nova-offwhite/30">Staff</button>
+        </div>
+      </>)}
     </div>
   );
 }
