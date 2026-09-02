@@ -228,36 +228,50 @@ export default function BookingStepDateTime({
 
           {!loading && !error && availability && (
             <>
-              {availability.slots.length === 0 ? (
-                <Card className="border-white/10 bg-nova-bg-matte p-6 text-center font-sans text-sm text-nova-offwhite/60">
-                  No hay barberos ni sillas configurados para esta sucursal.
-                </Card>
-              ) : (
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-                  {availability.slots.map((slot) => {
-                    const active = selectedSlot?.start_time === slot.start_time;
-                    return (
-                      <button
-                        key={slot.start_time}
-                        disabled={!slot.available}
-                        onClick={() => handlePickSlot(slot)}
-                        className={cn(
-                          "rounded-nova border py-2.5 font-sans text-sm font-medium transition-all",
-                          !slot.available &&
-                            "cursor-not-allowed border-white/5 text-nova-offwhite/20 line-through",
-                          slot.available &&
-                            !active &&
-                            "border-white/10 bg-nova-bg-matte text-nova-offwhite/80 hover:border-nova-gold/50",
-                          active &&
-                            "border-nova-gold bg-nova-gold-gradient text-nova-bg-deep shadow-nova-gold"
-                        )}
-                      >
-                        {slot.start_time}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              {(() => {
+                // Filtrar franjas pasadas si la fecha es hoy
+                const todayStr = toISODate(new Date());
+                let visibleSlots = availability.slots;
+                if (selectedDate === todayStr) {
+                  const now = new Date();
+                  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+                  visibleSlots = availability.slots.filter(slot => {
+                    const [h, m] = slot.start_time.split(":").map(Number);
+                    return h * 60 + m >= nowMinutes;
+                  });
+                }
+
+                if (visibleSlots.length === 0) return (
+                  <Card className="border-white/10 bg-nova-bg-matte p-6 text-center font-sans text-sm text-nova-offwhite/60">
+                    {selectedDate === todayStr
+                      ? "No quedan franjas disponibles para hoy. Intenta mañana."
+                      : "No hay barberos ni sillas configurados para esta sucursal."}
+                  </Card>
+                );
+
+                return (
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+                    {visibleSlots.map((slot) => {
+                      const active = selectedSlot?.start_time === slot.start_time;
+                      return (
+                        <button
+                          key={slot.start_time}
+                          disabled={!slot.available}
+                          onClick={() => handlePickSlot(slot)}
+                          className={cn(
+                            "rounded-nova border py-2.5 font-sans text-sm font-medium transition-all",
+                            !slot.available && "cursor-not-allowed border-white/5 text-nova-offwhite/20 line-through",
+                            slot.available && !active && "border-white/10 bg-nova-bg-matte text-nova-offwhite/80 hover:border-nova-gold/50",
+                            active && "border-nova-gold bg-nova-gold-gradient text-nova-bg-deep shadow-nova-gold"
+                          )}
+                        >
+                          {slot.start_time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </>
           )}
         </section>
