@@ -1,34 +1,17 @@
 """
-Setup completo — NOVA BARBER SHOP (Candelaria, Valle)
-=======================================================
-Corre este script UNA VEZ después del deploy para dejar todo
-configurado y listo para operar.
-
-Uso:
-    DATABASE_URL="postgresql://..." python -m app.setup_nova
-
-Crea:
-  - Admin (si no existe)
-  - Sucursal: Nova Barber Shop, Candelaria Valle
-  - 3 sillas
-  - 3 barberos con contraseñas temporales
-  - 1 cajera
-  - 4 servicios (Corte, Corte+Barba, Barba, Corte niño)
-  - Regla de comisión base 60/40
+Setup — NOVA BARBER SHOP (Candelaria, Valle)
+===============================================
+Limpia datos de configuración y recrea con datos actualizados.
+El admin existente se conserva.
 """
 
+from datetime import time
 from sqlmodel import Session, select
 
 from app.core.database import engine, init_db
 from app.core.security import hash_password
 from app.models.models import (
-    Barber,
-    Branch,
-    Chair,
-    CommissionRule,
-    Service,
-    User,
-    UserRole,
+    Barber, Branch, Chair, CommissionRule, Service, User, UserRole,
 )
 
 
@@ -37,7 +20,7 @@ def setup():
 
     with Session(engine) as s:
         # ============================================================
-        # 1. ADMIN
+        # 1. ADMIN — conservar si existe, crear si no
         # ============================================================
         admin = s.exec(select(User).where(User.email == "novabarbercol@gmail.com")).first()
         if not admin:
@@ -53,30 +36,63 @@ def setup():
             s.refresh(admin)
             print(f"[admin] Creado: {admin.email}")
         else:
-            print(f"[admin] Ya existe: {admin.email} (id={admin.id})")
+            print(f"[admin] Conservado: {admin.email} (id={admin.id})")
 
         # ============================================================
-        # 2. SUCURSAL
+        # 2. LIMPIAR staff anterior (excepto admin)
+        # ============================================================
+        old_barbers = s.exec(select(Barber)).all()
+        for b in old_barbers:
+            b.is_active = False
+            s.add(b)
+        old_staff = s.exec(
+            select(User).where(User.role.in_([UserRole.BARBER, UserRole.CASHIER]))
+        ).all()
+        for u in old_staff:
+            u.is_active = False
+            s.add(u)
+        s.commit()
+        print("[limpieza] Staff anterior desactivado")
+
+        # ============================================================
+        # 3. SUCURSAL
         # ============================================================
         branch = s.exec(select(Branch).where(Branch.name == "Nova Barber Shop")).first()
-        if not branch:
-            from datetime import time
+        if branch:
+            branch.address = "Calle 5 # 4 - 63"
+            branch.city = "Candelaria"
+            branch.phone = "3207970201"
+            branch.opening_time = time(9, 0)
+            branch.closing_time = time(21, 0)
+            branch.is_active = True
+            s.add(branch)
+            s.commit()
+            s.refresh(branch)
+            print(f"[sucursal] Actualizada: {branch.name} (id={branch.id})")
+        else:
             branch = Branch(
                 name="Nova Barber Shop",
-                address="Calle 9 #4-63",
-                city="Candelaria, Valle",
-                opening_time=time(9, 0),   # 9:00 AM
-                closing_time=time(21, 0),  # 9:00 PM
+                address="Calle 5 # 4 - 63",
+                city="Candelaria",
+                phone="3207970201",
+                opening_time=time(9, 0),
+                closing_time=time(21, 0),
+                is_active=True,
             )
             s.add(branch)
             s.commit()
             s.refresh(branch)
             print(f"[sucursal] Creada: {branch.name} (id={branch.id})")
-        else:
-            print(f"[sucursal] Ya existe: {branch.name} (id={branch.id})")
+
+        # Desactivar otras sucursales
+        other = s.exec(select(Branch).where(Branch.id != branch.id)).all()
+        for ob in other:
+            ob.is_active = False
+            s.add(ob)
+        s.commit()
 
         # ============================================================
-        # 3. SILLAS
+        # 4. SILLAS (3)
         # ============================================================
         chairs = {}
         for label in ["Silla 1", "Silla 2", "Silla 3"]:
@@ -86,83 +102,116 @@ def setup():
                 .where(Chair.label == label)
             ).first()
             if not chair:
-                chair = Chair(branch_id=branch.id, label=label)
+                chair = Chair(branch_id=branch.id, label=label, is_active=True)
                 s.add(chair)
                 s.commit()
                 s.refresh(chair)
                 print(f"[silla] Creada: {label} (id={chair.id})")
             else:
-                print(f"[silla] Ya existe: {label} (id={chair.id})")
+                chair.is_active = True
+                s.add(chair)
+                s.commit()
+                s.refresh(chair)
+                print(f"[silla] OK: {label} (id={chair.id})")
             chairs[label] = chair
 
         # ============================================================
-        # 4. BARBEROS
+        # 5. BARBEROS
         # ============================================================
         barberos = [
-            {"name": "Jhonier",  "phone": "322423455",  "chair": "Silla 1"},
-            {"name": "Gustavo",  "phone": "3170724789", "chair": "Silla 2"},
-            {"name": "Juancho",  "phone": "322423456",  "chair": "Silla 3"},
+            {
+                "full_name": "Gustavo Moreno",
+                "phone": "3170724789",
+                "emergency": "3148027541",
+                "chair": "Silla 2",
+            },
+            {
+                "full_name": "Juan Carlos Moreno",
+                "phone": "3117632525",
+                "emergency": "3170724789",
+                "chair": "Silla 3",
+            },
         ]
 
-        print("\n" + "=" * 50)
-        print("  CONTRASEÑAS DE BARBEROS (anotar y entregar)")
-        print("=" * 50)
+        print("\n" + "=" * 55)
+        print("  CREDENCIALES DEL EQUIPO")
+        print("=" * 55)
 
         for bb in barberos:
-            user = s.exec(select(User).where(User.phone == bb["phone"])).first()
-            temp_pw = f"nova{bb['phone'][-4:]}"  # ej: nova3455
+            temp_pw = f"nova{bb['phone'][-4:]}"
 
-            if not user:
-                user = User(
-                    full_name=bb["name"],
-                    phone=bb["phone"],
-                    hashed_password=hash_password(temp_pw),
-                    role=UserRole.BARBER,
-                    must_change_password=True,
-                )
+            user = s.exec(select(User).where(User.phone == bb["phone"])).first()
+            if user:
+                user.full_name = bb["full_name"]
+                user.role = UserRole.BARBER
+                user.is_active = True
+                user.emergency_contact = bb["emergency"]
                 s.add(user)
                 s.commit()
                 s.refresh(user)
             else:
-                print(f"  [barbero] Ya existe: {bb['name']}")
+                user = User(
+                    full_name=bb["full_name"],
+                    phone=bb["phone"],
+                    hashed_password=hash_password(temp_pw),
+                    role=UserRole.BARBER,
+                    is_active=True,
+                    must_change_password=True,
+                    emergency_contact=bb["emergency"],
+                )
+                s.add(user)
+                s.commit()
+                s.refresh(user)
 
-            # Crear perfil Barber si no existe
             barber = s.exec(select(Barber).where(Barber.user_id == user.id)).first()
-            if not barber:
+            if barber:
+                barber.is_active = True
+                barber.chair_id = chairs[bb["chair"]].id
+                barber.branch_id = branch.id
+                s.add(barber)
+                s.commit()
+            else:
                 barber = Barber(
                     user_id=user.id,
                     branch_id=branch.id,
                     chair_id=chairs[bb["chair"]].id,
+                    is_active=True,
                 )
                 s.add(barber)
                 s.commit()
-                s.refresh(barber)
 
-            print(f"  {bb['name']:12s} | tel: {bb['phone']:12s} | pw: {temp_pw:10s} | {bb['chair']}")
-
-        print("=" * 50)
+            print(f"  {bb['full_name']:22s} | tel: {bb['phone']:12s} | pw: {temp_pw:10s} | {bb['chair']}")
 
         # ============================================================
-        # 5. CAJERA
+        # 6. CAJERA
         # ============================================================
-        cajera = s.exec(select(User).where(User.phone == "3148027541")).first()
         cajera_pw = "nova7541"
-        if not cajera:
+        cajera = s.exec(select(User).where(User.phone == "3148027541")).first()
+        if cajera:
+            cajera.full_name = "Nathalia Muñoz"
+            cajera.role = UserRole.CASHIER
+            cajera.is_active = True
+            cajera.emergency_contact = "3170724789"
+            s.add(cajera)
+            s.commit()
+        else:
             cajera = User(
-                full_name="Nathaly",
+                full_name="Nathalia Muñoz",
                 phone="3148027541",
                 hashed_password=hash_password(cajera_pw),
                 role=UserRole.CASHIER,
+                is_active=True,
                 must_change_password=True,
+                emergency_contact="3170724789",
             )
             s.add(cajera)
             s.commit()
-            s.refresh(cajera)
 
-        print(f"\n  CAJERA: Nathaly | tel: 3148027541 | pw: {cajera_pw}")
+        print(f"  {'Nathalia Muñoz':22s} | tel: {'3148027541':12s} | pw: {cajera_pw:10s} | Cajera")
+        print("=" * 55)
 
         # ============================================================
-        # 6. SERVICIOS
+        # 7. SERVICIOS
         # ============================================================
         servicios = [
             {"name": "Corte",         "price": 17000, "duration_minutes": 30},
@@ -177,17 +226,21 @@ def setup():
                 existing.is_active = True
                 s.add(existing)
             else:
-                s.add(Service(**sv))
-        # Desactivar Corte niño si existe
-        corte_nino = s.exec(select(Service).where(Service.name == "Corte niño")).first()
-        if corte_nino:
-            corte_nino.is_active = False
-            s.add(corte_nino)
+                s.add(Service(**sv, is_active=True))
+
+        # Desactivar servicios que no estén en la lista
+        all_svcs = s.exec(select(Service)).all()
+        active_names = {sv["name"] for sv in servicios}
+        for svc in all_svcs:
+            if svc.name not in active_names:
+                svc.is_active = False
+                s.add(svc)
+
         s.commit()
-        print(f"\n[servicios] 3 servicios configurados")
+        print(f"\n[servicios] Corte ($17.000), Corte + Barba ($19.000), Barba ($6.000)")
 
         # ============================================================
-        # 7. COMISIÓN BASE 60/40
+        # 8. COMISIÓN BASE 60/40
         # ============================================================
         rule = s.exec(
             select(CommissionRule)
@@ -199,25 +252,20 @@ def setup():
             rule = CommissionRule(barber_pct=60, note="Regla base 60/40")
             s.add(rule)
             s.commit()
-            print(f"[comisión] Regla base: 60% barbero / 40% barbería")
-        else:
-            print(f"[comisión] Ya existe regla base: {rule.barber_pct}%/{100 - rule.barber_pct}%")
+        print(f"[comisión] 60% barbero / 40% barbería")
 
         # ============================================================
-        # RESUMEN
-        # ============================================================
-        print("\n" + "=" * 50)
+        print("\n" + "=" * 55)
         print("  ✅ NOVA BARBER SHOP — CONFIGURACIÓN COMPLETA")
-        print("=" * 50)
-        print(f"  Sucursal:  {branch.name}")
-        print(f"  Dirección: {branch.address}, {branch.city}")
-        print(f"  Horario:   {branch.opening_time} — {branch.closing_time}")
-        print(f"  Sillas:    3")
-        print(f"  Barberos:  Jhonier, Gustavo, Juancho")
-        print(f"  Cajera:    Nathaly")
-        print(f"  Comisión:  60% barbero / 40% barbería")
-        print(f"  Admin:     novabarbercol@gmail.com")
-        print("=" * 50)
+        print("=" * 55)
+        print(f"  Sucursal:    {branch.name}")
+        print(f"  Dirección:   {branch.address}, {branch.city}")
+        print(f"  Teléfono:    {branch.phone}")
+        print(f"  Horario:     9:00 AM — 9:00 PM")
+        print(f"  Sillas:      3 (Silla 1 libre, Silla 2 Gustavo, Silla 3 Juan Carlos)")
+        print(f"  Cajera:      Nathalia Muñoz")
+        print(f"  Admin:       novabarbercol@gmail.com")
+        print("=" * 55)
 
 
 if __name__ == "__main__":

@@ -33,10 +33,10 @@ class CreateStaffRequest(BaseModel):
     phone: str
     email: Optional[str] = None
     role: str  # "barber" o "cashier"
-    # Solo para barberos:
+    emergency_contact: Optional[str] = None
     branch_id: Optional[int] = None
     chair_id: Optional[int] = None
-    password: Optional[str] = None  # si no se envía, se genera una temporal
+    password: Optional[str] = None
 
 
 class StaffRead(BaseModel):
@@ -47,7 +47,7 @@ class StaffRead(BaseModel):
     role: str
     is_active: bool
     must_change_password: bool
-    # Solo barberos:
+    emergency_contact: Optional[str] = None
     branch_name: Optional[str] = None
     chair_label: Optional[str] = None
     barber_id: Optional[int] = None
@@ -104,7 +104,8 @@ def create_staff(payload: CreateStaffRequest, session: Session = Depends(get_ses
         email=payload.email,
         hashed_password=hash_password(temp_password),
         role=UserRole(payload.role),
-        must_change_password=payload.password is None,  # si el admin puso una, no forzar cambio
+        must_change_password=payload.password is None,
+        emergency_contact=payload.emergency_contact,
     )
     session.add(user)
     session.commit()
@@ -153,6 +154,7 @@ def create_staff(payload: CreateStaffRequest, session: Session = Depends(get_ses
             role=user.role.value,
             is_active=user.is_active,
             must_change_password=user.must_change_password,
+            emergency_contact=user.emergency_contact,
             branch_name=branch_name,
             chair_label=chair_label,
             barber_id=barber_id,
@@ -197,6 +199,7 @@ def list_staff(
             role=u.role.value,
             is_active=u.is_active,
             must_change_password=u.must_change_password,
+            emergency_contact=u.emergency_contact,
             branch_name=branch_name,
             chair_label=chair_label,
             barber_id=barber_id,
@@ -233,7 +236,7 @@ class UpdateStaffRequest(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     is_active: Optional[bool] = None
-    # Para barberos: reasignar silla
+    emergency_contact: Optional[str] = None
     chair_id: Optional[int] = None
 
 
@@ -254,6 +257,8 @@ def update_staff(user_id: int, payload: UpdateStaffRequest, session: Session = D
         user.phone = payload.phone
     if payload.email is not None:
         user.email = payload.email
+    if payload.emergency_contact is not None:
+        user.emergency_contact = payload.emergency_contact
     if payload.is_active is not None:
         user.is_active = payload.is_active
         # Si se desactiva un barbero, desactivar su perfil para liberar la silla
@@ -302,6 +307,7 @@ def update_staff(user_id: int, payload: UpdateStaffRequest, session: Session = D
         id=user.id, full_name=user.full_name, phone=user.phone,
         email=user.email, role=user.role.value, is_active=user.is_active,
         must_change_password=user.must_change_password,
+        emergency_contact=user.emergency_contact,
         branch_name=branch_name, chair_label=chair_label, barber_id=barber_id,
     )
 

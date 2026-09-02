@@ -108,7 +108,8 @@ class User(SQLModel, table=True):
     hashed_password: Optional[str] = None
     role: UserRole = Field(default=UserRole.CLIENT, index=True)
     is_active: bool = Field(default=True)
-    must_change_password: bool = Field(default=False)  # para cuentas creadas por admin
+    must_change_password: bool = Field(default=False)
+    emergency_contact: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     preferred_branch_id: Optional[int] = Field(default=None, foreign_key="branches.id")
