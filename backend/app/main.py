@@ -8,6 +8,7 @@ from app.routers import (
     analytics,
     appointments,
     auth,
+    auth_recover,
     availability,
     barber,
     barber_earnings,
@@ -40,6 +41,7 @@ def on_startup():
 
 
 app.include_router(auth.router)
+app.include_router(auth_recover.router)
 app.include_router(branches.router)
 app.include_router(chairs.router)
 app.include_router(services.router)

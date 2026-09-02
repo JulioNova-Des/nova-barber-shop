@@ -228,6 +228,107 @@ def reset_staff_password(user_id: int, session: Session = Depends(get_session)):
     )
 
 
+class UpdateStaffRequest(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    is_active: Optional[bool] = None
+    # Para barberos: reasignar silla
+    chair_id: Optional[int] = None
+
+
+@router.patch(
+    "/admin/staff/{user_id}",
+    response_model=StaffRead,
+    dependencies=[Depends(get_current_admin)],
+)
+def update_staff(user_id: int, payload: UpdateStaffRequest, session: Session = Depends(get_session)):
+    """Editar datos de un empleado. Si se desactiva un barbero, su silla queda libre."""
+    user = session.get(User, user_id)
+    if not user or user.role not in (UserRole.BARBER, UserRole.CASHIER):
+        raise HTTPException(404, "Empleado no encontrado.")
+
+    if payload.full_name is not None:
+        user.full_name = payload.full_name
+    if payload.phone is not None:
+        user.phone = payload.phone
+    if payload.email is not None:
+        user.email = payload.email
+    if payload.is_active is not None:
+        user.is_active = payload.is_active
+        # Si se desactiva un barbero, desactivar su perfil para liberar la silla
+        if not payload.is_active and user.role == UserRole.BARBER:
+            barber = session.exec(select(Barber).where(Barber.user_id == user.id)).first()
+            if barber:
+                barber.is_active = False
+                session.add(barber)
+
+    session.add(user)
+
+    # Reasignar silla si se especifica
+    if payload.chair_id is not None and user.role == UserRole.BARBER:
+        barber = session.exec(select(Barber).where(Barber.user_id == user.id)).first()
+        if barber:
+            chair = session.get(Chair, payload.chair_id)
+            if not chair:
+                raise HTTPException(404, "Silla no encontrada.")
+            # Verificar que la silla no tenga otro barbero activo
+            existing = session.exec(
+                select(Barber).where(Barber.chair_id == payload.chair_id).where(Barber.is_active == True).where(Barber.id != barber.id)
+            ).first()
+            if existing:
+                raise HTTPException(409, "Esa silla ya tiene un barbero asignado.")
+            barber.chair_id = payload.chair_id
+            barber.branch_id = chair.branch_id
+            session.add(barber)
+
+    session.commit()
+    session.refresh(user)
+
+    # Build response
+    branch_name = None
+    chair_label = None
+    barber_id = None
+    if user.role == UserRole.BARBER:
+        barber = session.exec(select(Barber).where(Barber.user_id == user.id)).first()
+        if barber:
+            barber_id = barber.id
+            branch = session.get(Branch, barber.branch_id)
+            chair = session.get(Chair, barber.chair_id)
+            branch_name = branch.name if branch else None
+            chair_label = chair.label if chair else None
+
+    return StaffRead(
+        id=user.id, full_name=user.full_name, phone=user.phone,
+        email=user.email, role=user.role.value, is_active=user.is_active,
+        must_change_password=user.must_change_password,
+        branch_name=branch_name, chair_label=chair_label, barber_id=barber_id,
+    )
+
+
+@router.delete(
+    "/admin/staff/{user_id}",
+    status_code=204,
+    dependencies=[Depends(get_current_admin)],
+)
+def deactivate_staff(user_id: int, session: Session = Depends(get_session)):
+    """Desactiva un empleado (soft delete). Si es barbero, libera su silla."""
+    user = session.get(User, user_id)
+    if not user or user.role not in (UserRole.BARBER, UserRole.CASHIER):
+        raise HTTPException(404, "Empleado no encontrado.")
+
+    user.is_active = False
+    session.add(user)
+
+    if user.role == UserRole.BARBER:
+        barber = session.exec(select(Barber).where(Barber.user_id == user.id)).first()
+        if barber:
+            barber.is_active = False
+            session.add(barber)
+
+    session.commit()
+
+
 @router.post("/auth/change-password")
 def change_own_password(
     payload: ChangePasswordRequest,

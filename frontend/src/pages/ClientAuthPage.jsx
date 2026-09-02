@@ -161,23 +161,51 @@ export default function ClientAuthPage({ onLogin, onGuest }) {
     );
   }
 
+  const [recoverPhone, setRecoverPhone] = useState("");
+  const [recoverResult, setRecoverResult] = useState(null);
+
+  const handleRecover = async () => {
+    if (!recoverPhone.trim()) { setError("Ingresa tu número de teléfono."); return; }
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch(`${API}/auth/recover`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: recoverPhone.trim() }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || "Error"); }
+      const data = await res.json();
+      setRecoverResult(data);
+    } catch (e) { setError(e.message); }
+    setLoading(false);
+  };
+
   // RECOVERY
   return (
     <div className="flex min-h-screen items-center justify-center bg-nova-bg-deep px-6">
       <div className="w-full max-w-sm text-center">
         <img src="/logo-nova.jpg" alt="NOVA" className="mx-auto mb-4 h-16 w-16 rounded-full border border-nova-gold/30 object-cover" />
         <h1 className="font-display text-xl font-bold mb-2">Recuperar contraseña</h1>
-        <div className="mb-6 rounded-nova border border-white/10 bg-nova-bg-matte p-5">
-          <p className="font-sans text-sm text-nova-offwhite/70 leading-relaxed">
-            Para recuperar tu contraseña, comunícate directamente en <strong className="text-nova-offwhite">Nova Barber Shop</strong>.
-          </p>
-          <div className="mt-4 space-y-2 text-left font-sans text-sm">
-            <div className="flex items-center gap-2 text-nova-offwhite/60"><span>📍</span><span>Calle 9 #4-63, Candelaria, Valle</span></div>
-            <div className="flex items-center gap-2 text-nova-offwhite/60"><span>📱</span><span>Escríbenos o llámanos</span></div>
+
+        {!recoverResult ? (<>
+          <p className="mb-4 font-sans text-sm text-nova-offwhite/50">Ingresa el teléfono con el que te registraste y te asignaremos una nueva contraseña.</p>
+          <AuthInput label="Teléfono registrado" value={recoverPhone} onChange={setRecoverPhone} placeholder="Ej: 300 123 4567" icon="📱" />
+          {error && <div className="mb-4 rounded-nova border border-red-500/30 bg-red-500/5 p-3 text-center font-sans text-sm text-red-300">{error}</div>}
+          <button onClick={handleRecover} disabled={loading || !recoverPhone.trim()}
+            className="mb-4 h-12 w-full rounded-nova bg-nova-gold-gradient font-display text-sm font-semibold uppercase tracking-wide text-nova-bg-deep hover:brightness-110 disabled:opacity-30">
+            {loading ? "Procesando…" : "Recuperar contraseña"}
+          </button>
+        </>) : (
+          <div className="mb-6 rounded-nova border border-green-400/30 bg-green-400/5 p-5">
+            <div className="font-sans text-sm text-green-300 mb-3">✅ {recoverResult.message}</div>
+            <div className="rounded-nova border border-nova-gold/30 bg-nova-bg-matte p-4">
+              <div className="font-sans text-xs text-nova-offwhite/50 mb-1">Tu nueva contraseña es:</div>
+              <div className="font-display text-2xl font-bold text-nova-gold-light tracking-wider">{recoverResult.new_password}</div>
+            </div>
+            <p className="mt-3 font-sans text-xs text-nova-offwhite/40">Úsala para iniciar sesión. Te recomendamos cambiarla después desde tu perfil.</p>
           </div>
-          <p className="mt-4 font-sans text-xs text-nova-offwhite/40">Te daremos una nueva contraseña temporal.</p>
-        </div>
-        <button onClick={() => setMode("login")} className="font-sans text-xs text-nova-offwhite/50 hover:text-nova-offwhite">← Volver al login</button>
+        )}
+
+        <button onClick={() => { setMode("login"); setRecoverResult(null); setRecoverPhone(""); setError(null); }} className="font-sans text-xs text-nova-offwhite/50 hover:text-nova-offwhite">← Volver al login</button>
       </div>
     </div>
   );

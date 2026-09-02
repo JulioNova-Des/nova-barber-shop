@@ -173,13 +173,43 @@ export default function AdminDashboard({ user, token, onLogout, onHome }) {
 
           {teamSub==="members" && (<>
             <SectionHeader title="Equipo" count={staff.length} actionLabel="+ Agregar" onAction={()=>{setShowForm("staff");setForm({role:"barber"});}} />
-            {staff.map(s=><ItemCard key={s.id} actions={<><Btn onClick={()=>resetPw(s.id,s.full_name)}>🔑 Reset pw</Btn></>}>
+            {staff.map(s=><ItemCard key={s.id} actions={<>
+              <Btn onClick={()=>{setEditId(s.id);setForm({full_name:s.full_name,phone:s.phone,email:s.email,chair_id:null});setShowForm("editStaff");}}>✏️ Editar</Btn>
+              <Btn onClick={()=>resetPw(s.id,s.full_name)}>🔑 Reset pw</Btn>
+              {s.is_active
+                ? <Btn onClick={()=>{if(confirm(`¿Desactivar a ${s.full_name}? Su silla quedará libre.`))api("DELETE",`${API}/admin/staff/${s.id}`).then(load)}} danger>⏸ Desactivar</Btn>
+                : <Btn onClick={()=>api("PATCH",`${API}/admin/staff/${s.id}`,{is_active:true}).then(r=>{if(r.ok)load()})}>▶ Reactivar</Btn>
+              }
+            </>}>
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-nova-gold/10 font-display text-xs font-bold text-nova-gold-light">{s.full_name.split(" ").map(w=>w[0]).join("").slice(0,2)}</div>
                 <div className="flex-1"><div className="text-sm font-medium">{s.full_name}</div><div className="text-[11px] text-nova-offwhite/40">{s.role==="barber"?`Barbero · ${s.branch_name||""} · ${s.chair_label||""}`:"Cajero/a"} · {s.phone}</div></div>
                 <span className={cn("rounded-full px-2 py-0.5 text-[10px]",s.is_active?"text-green-300 border border-green-400/30":"text-red-300 border border-red-400/30")}>{s.is_active?"Activo":"Inactivo"}</span>
               </div>
             </ItemCard>)}
+            {showForm==="editStaff" && <FormWrap title="Editar integrante" onSave={async ()=>{
+              const body = {};
+              if(form.full_name) body.full_name = form.full_name;
+              if(form.phone) body.phone = form.phone;
+              if(form.email !== undefined) body.email = form.email;
+              if(form.chair_id) body.chair_id = parseInt(form.chair_id);
+              const r = await api("PATCH",`${API}/admin/staff/${editId}`,body);
+              if(r.ok){closeForm();load();}else{const e=await r.json();alert(e.detail);}
+            }} onCancel={closeForm}>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <Inp label="Nombre" value={form.full_name} onChange={v=>setForm({...form,full_name:v})}/>
+                <Inp label="Teléfono" value={form.phone} onChange={v=>setForm({...form,phone:v})}/>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Inp label="Email" value={form.email} onChange={v=>setForm({...form,email:v})}/>
+                <div><label className="mb-1 block text-[11px] text-nova-offwhite/50">Reasignar silla</label>
+                  <select className="h-10 w-full rounded-nova border border-white/15 bg-nova-bg-main px-3 text-sm text-nova-offwhite" value={form.chair_id||""} onChange={e=>setForm({...form,chair_id:e.target.value})}>
+                    <option value="">Sin cambio</option>
+                    {chairs.map(c=><option key={c.id} value={c.id}>{c.label}{c.barber_name?` (${c.barber_name})`:""}</option>)}
+                  </select>
+                </div>
+              </div>
+            </FormWrap>}
             {showForm==="staff" && <FormWrap title="Nuevo integrante" onSave={createStaff} onCancel={closeForm}>
               <div className="grid grid-cols-2 gap-3 mb-3"><Inp label="Nombre" value={form.full_name} onChange={v=>setForm({...form,full_name:v})}/><Inp label="Teléfono" value={form.phone} onChange={v=>setForm({...form,phone:v})}/></div>
               <div className="grid grid-cols-2 gap-3"><div><label className="mb-1 block text-[11px] text-nova-offwhite/50">Rol</label><select className="h-10 w-full rounded-nova border border-white/15 bg-nova-bg-main px-3 text-sm text-nova-offwhite" value={form.role} onChange={e=>setForm({...form,role:e.target.value})}><option value="barber">Barbero</option><option value="cashier">Cajero/a</option></select></div>
