@@ -292,7 +292,7 @@ class PettyCash(SQLModel, table=True):
     __tablename__ = "petty_cash"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    date: date = Field(index=True)
+    expense_date: date = Field(index=True)
     description: str
     amount: int  # en COP
     created_by: int = Field(foreign_key="users.id")

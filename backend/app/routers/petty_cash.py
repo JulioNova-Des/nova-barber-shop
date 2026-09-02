@@ -57,16 +57,16 @@ def list_petty_cash(
 
     stmt = (
         select(PettyCash)
-        .where(PettyCash.date >= date_type(y, m, 1))
-        .where(PettyCash.date < date_type(y + (1 if m == 12 else 0), (m % 12) + 1, 1))
-        .order_by(PettyCash.date.desc(), PettyCash.created_at.desc())
+        .where(PettyCash.expense_date >= date_type(y, m, 1))
+        .where(PettyCash.expense_date < date_type(y + (1 if m == 12 else 0), (m % 12) + 1, 1))
+        .order_by(PettyCash.expense_date.desc(), PettyCash.created_at.desc())
     )
     items = session.exec(stmt).all()
     result = []
     for item in items:
         user = session.get(User, item.created_by)
         result.append(PettyCashRead(
-            id=item.id, date=item.date.isoformat(),
+            id=item.id, date=item.expense_date.isoformat(),
             description=item.description, amount=item.amount,
             created_by_name=user.full_name if user else "—",
             created_at=item.created_at,
@@ -82,14 +82,14 @@ def create_petty_cash(
 ):
     _require_cashier_or_admin(current_user)
     item = PettyCash(
-        date=payload.date, description=payload.description,
+        expense_date=payload.date, description=payload.description,
         amount=payload.amount, created_by=current_user.id,
     )
     session.add(item)
     session.commit()
     session.refresh(item)
     return PettyCashRead(
-        id=item.id, date=item.date.isoformat(),
+        id=item.id, date=item.expense_date.isoformat(),
         description=item.description, amount=item.amount,
         created_by_name=current_user.full_name, created_at=item.created_at,
     )
@@ -106,14 +106,15 @@ def update_petty_cash(
     if not item:
         raise HTTPException(404, "Gasto no encontrado.")
     for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(item, field, value)
+        db_field = "expense_date" if field == "date" else field
+        setattr(item, db_field, value)
     item.updated_at = datetime.utcnow()
     session.add(item)
     session.commit()
     session.refresh(item)
     user = session.get(User, item.created_by)
     return PettyCashRead(
-        id=item.id, date=item.date.isoformat(),
+        id=item.id, date=item.expense_date.isoformat(),
         description=item.description, amount=item.amount,
         created_by_name=user.full_name if user else "—", created_at=item.created_at,
     )
