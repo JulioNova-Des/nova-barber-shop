@@ -169,12 +169,11 @@ function ClientAccountPage() {
 
 function ClientProfileRouter() {
   const nav = useNavigate();
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  useEffect(() => {
-    const t = localStorage.getItem("nova_token"); const u = localStorage.getItem("nova_user");
-    if (t && u) { try { setUser(JSON.parse(u)); setToken(t); } catch {} }
-  }, []);
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("nova_user")); } catch { return null; }
+  });
+  const [token, setToken] = useState(() => localStorage.getItem("nova_token"));
+
   if (!user || !token) return <Navigate to="/cuenta" />;
   return <ClientProfilePage user={user} token={token}
     onLogout={() => { localStorage.removeItem("nova_token"); localStorage.removeItem("nova_user"); nav("/"); }}
@@ -183,12 +182,12 @@ function ClientProfileRouter() {
 
 function StaffRouter() {
   const nav = useNavigate();
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  useEffect(() => {
-    const t = localStorage.getItem("nova_token"); const u = localStorage.getItem("nova_user");
-    if (t && u) { try { const p = JSON.parse(u); if (p.role !== "client") { setUser(p); setToken(t); } } catch {} }
-  }, []);
+  const [user, setUser] = useState(() => {
+    try { const p = JSON.parse(localStorage.getItem("nova_user")); return p?.role !== "client" ? p : null; } catch { return null; }
+  });
+  const [token, setToken] = useState(() => {
+    try { const p = JSON.parse(localStorage.getItem("nova_user")); return p?.role !== "client" ? localStorage.getItem("nova_token") : null; } catch { return null; }
+  });
   const handleLogin = (u, t) => { setUser(u); setToken(t); };
   const handleLogout = () => { localStorage.removeItem("nova_token"); localStorage.removeItem("nova_user"); setUser(null); setToken(null); };
 
