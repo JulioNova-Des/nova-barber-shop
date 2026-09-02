@@ -18,6 +18,57 @@ from app.models.models import (
 def setup():
     init_db()
 
+    # Migración automática: agregar columnas nuevas si no existen
+    from sqlalchemy import text, inspect
+    with engine.connect() as conn:
+        inspector = inspect(engine)
+        
+        # users.emergency_contact
+        user_cols = [c["name"] for c in inspector.get_columns("users")]
+        if "emergency_contact" not in user_cols:
+            conn.execute(text("ALTER TABLE users ADD COLUMN emergency_contact VARCHAR"))
+            conn.commit()
+            print("[migración] Agregada columna users.emergency_contact")
+
+        # appointments.payment_method
+        appt_cols = [c["name"] for c in inspector.get_columns("appointments")]
+        if "payment_method" not in appt_cols:
+            conn.execute(text("ALTER TABLE appointments ADD COLUMN payment_method VARCHAR"))
+            conn.commit()
+            print("[migración] Agregada columna appointments.payment_method")
+
+        # petty_cash table
+        tables = inspector.get_table_names()
+        if "petty_cash" not in tables:
+            conn.execute(text("""
+                CREATE TABLE petty_cash (
+                    id SERIAL PRIMARY KEY,
+                    expense_date DATE NOT NULL,
+                    description VARCHAR NOT NULL,
+                    amount INTEGER NOT NULL,
+                    created_by INTEGER NOT NULL REFERENCES users(id),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.commit()
+            print("[migración] Creada tabla petty_cash")
+
+        # page_visits table
+        if "page_visits" not in tables:
+            conn.execute(text("""
+                CREATE TABLE page_visits (
+                    id SERIAL PRIMARY KEY,
+                    year INTEGER NOT NULL,
+                    month INTEGER NOT NULL,
+                    day INTEGER NOT NULL,
+                    count INTEGER DEFAULT 0,
+                    UNIQUE(year, month, day)
+                )
+            """))
+            conn.commit()
+            print("[migración] Creada tabla page_visits")
+
     with Session(engine) as s:
         # ============================================================
         # 1. ADMIN — conservar si existe, crear si no
