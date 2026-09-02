@@ -99,9 +99,8 @@ def setup():
         # 4. BARBEROS
         # ============================================================
         barberos = [
-            {"name": "Jhonier",  "phone": "322423455",  "chair": "Silla 1"},
+            {"name": "Juan Carlos",  "phone": "3117632525",  "chair": "Silla 3"},
             {"name": "Gustavo",  "phone": "3170724789", "chair": "Silla 2"},
-            {"name": "Juancho",  "phone": "322423456",  "chair": "Silla 3"},
         ]
 
         print("\n" + "=" * 50)
@@ -213,7 +212,7 @@ def setup():
         print(f"  Dirección: {branch.address}, {branch.city}")
         print(f"  Horario:   {branch.opening_time} — {branch.closing_time}")
         print(f"  Sillas:    3")
-        print(f"  Barberos:  Jhonier, Gustavo, Juancho")
+        print(f"  Barberos:  Juan Carlos, Gustavo")
         print(f"  Cajera:    Nathaly")
         print(f"  Comisión:  60% barbero / 40% barbería")
         print(f"  Admin:     novabarbercol@gmail.com")
