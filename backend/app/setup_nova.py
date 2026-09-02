@@ -69,6 +69,18 @@ def setup():
             conn.commit()
             print("[migración] Creada tabla page_visits")
 
+        # barbers.chair_id: hacer nullable para liberar sillas de barberos inactivos
+        try:
+            conn.execute(text("ALTER TABLE barbers ALTER COLUMN chair_id DROP NOT NULL"))
+            conn.commit()
+            print("[migración] barbers.chair_id ahora es nullable")
+        except Exception:
+            conn.rollback()
+
+        # Limpiar barberos inactivos que aún ocupan silla
+        conn.execute(text("UPDATE barbers SET chair_id = NULL WHERE is_active = false AND chair_id IS NOT NULL"))
+        conn.commit()
+
     with Session(engine) as s:
         # ============================================================
         # 1. ADMIN — conservar si existe, crear si no
@@ -95,6 +107,7 @@ def setup():
         old_barbers = s.exec(select(Barber)).all()
         for b in old_barbers:
             b.is_active = False
+            b.chair_id = None  # Liberar la silla para reasignar
             s.add(b)
         old_staff = s.exec(
             select(User).where(User.role.in_([UserRole.BARBER, UserRole.CASHIER]))
@@ -103,7 +116,7 @@ def setup():
             u.is_active = False
             s.add(u)
         s.commit()
-        print("[limpieza] Staff anterior desactivado")
+        print("[limpieza] Staff anterior desactivado, sillas liberadas")
 
         # ============================================================
         # 3. SUCURSAL

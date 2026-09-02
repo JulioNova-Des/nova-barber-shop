@@ -135,7 +135,7 @@ class Barber(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id", unique=True)
     branch_id: int = Field(foreign_key="branches.id", index=True)
-    chair_id: int = Field(foreign_key="chairs.id", unique=True)
+    chair_id: Optional[int] = Field(default=None, foreign_key="chairs.id", unique=True)
     bio: Optional[str] = None
     is_active: bool = Field(default=True)
 
