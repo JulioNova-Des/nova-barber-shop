@@ -35,22 +35,33 @@ function HomePage() {
       <h1 className="font-display text-sm uppercase tracking-[0.25em] text-nova-champagne">Nova Barber Shop</h1>
 
       {cu ? (<>
-        <p className="mt-2 font-sans text-sm text-nova-offwhite/60">Hola, <span className="text-nova-offwhite">{cu.full_name}</span></p>
+        <p className="mt-3 font-sans text-base text-nova-offwhite/70">Hola, <span className="font-semibold text-nova-offwhite">{cu.full_name}</span></p>
+        <p className="mt-1 font-sans text-xs text-nova-offwhite/40">¿Qué deseas hacer?</p>
 
         <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
           <button onClick={() => nav("/reservar")}
-            className="h-14 w-full rounded-nova bg-nova-gold-gradient font-display text-sm font-semibold uppercase tracking-wide text-nova-bg-deep hover:brightness-110">
-            ✂ Nueva reserva
+            className="flex h-16 w-full items-center gap-4 rounded-nova bg-nova-gold-gradient px-5 text-left hover:brightness-110">
+            <span className="text-2xl">✂</span>
+            <div>
+              <div className="font-display text-sm font-semibold uppercase tracking-wide text-nova-bg-deep">Nueva reserva</div>
+              <div className="font-sans text-[11px] text-nova-bg-deep/70">Agenda tu próxima cita</div>
+            </div>
           </button>
+
           <button onClick={() => nav("/perfil")}
-            className="h-14 w-full rounded-nova border border-white/15 bg-nova-bg-matte font-display text-sm font-semibold uppercase tracking-wide text-nova-offwhite hover:border-nova-gold/30">
-            📋 Ver mis reservas
-          </button>
-          <button onClick={logout}
-            className="mt-2 font-sans text-xs text-nova-offwhite/40 hover:text-nova-offwhite/60">
-            Cerrar sesión
+            className="flex h-16 w-full items-center gap-4 rounded-nova border border-white/15 bg-nova-bg-matte px-5 text-left hover:border-nova-gold/30">
+            <span className="text-2xl">📋</span>
+            <div>
+              <div className="font-display text-sm font-semibold uppercase tracking-wide text-nova-offwhite">Ver mis reservas</div>
+              <div className="font-sans text-[11px] text-nova-offwhite/40">Programadas, historial y canceladas</div>
+            </div>
           </button>
         </div>
+
+        <button onClick={logout}
+          className="mt-6 font-sans text-xs text-nova-offwhite/30 hover:text-nova-offwhite/50">
+          Cerrar sesión
+        </button>
       </>) : (<>
         <p className="mt-2 max-w-sm font-sans text-sm text-nova-offwhite/50">Agenda tu cita en línea. Elige servicio, fecha y hora — sin esperas.</p>
         <button onClick={() => nav("/reservar")}
@@ -142,7 +153,7 @@ function BookingPage() {
       barberId={booking.barberId} barberName="Barbero asignado"
       date={booking.date} startTime={booking.startTime} endTime={booking.endTime}
       onBack={() => setStep("2")} onGoToAvailability={() => setStep("2")}
-      onNewBooking={reset} onGoHome={backToHome} />
+      onNewBooking={reset} onGoHome={backToHome} onViewBookings={() => nav("/perfil")} />
   </>);
 }
 

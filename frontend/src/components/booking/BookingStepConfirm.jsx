@@ -21,7 +21,7 @@ export default function BookingStepConfirm({
   branchId, branchName, serviceId, serviceName, price, durationMinutes,
   chairId, chairLabel, barberId, barberName,
   date, startTime, endTime,
-  onBack, onGoToAvailability, onNewBooking, onGoHome,
+  onBack, onGoToAvailability, onNewBooking, onGoHome, onViewBookings,
 }) {
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
@@ -92,14 +92,14 @@ export default function BookingStepConfirm({
               onClick={onNewBooking}
               className="h-11 flex-1 rounded-nova bg-nova-gold-gradient font-display text-xs font-semibold uppercase tracking-wide text-nova-bg-deep hover:brightness-110"
             >
-              Nueva reserva
+              ✂ Nueva reserva
             </Button>
             <Button
-              onClick={onGoHome}
+              onClick={onViewBookings}
               variant="outline"
               className="h-11 flex-1 rounded-nova border-white/15 bg-transparent font-display text-xs font-semibold uppercase text-nova-offwhite hover:border-nova-gold/50"
             >
-              Inicio
+              📋 Ver mis reservas
             </Button>
           </div>
 
